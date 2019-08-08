@@ -1,0 +1,38 @@
+{
+  "name": "t-koa-metrics",
+  "version": "1.0.0",
+  "description": "api metrics utils for koa 1.x",
+  "main": "index.js",
+  "author": {
+    "name": "d2bot",
+    "url": "https://github.com/d2bot"
+  },
+  "homepage": "https://github.com/d2bot/t-koa-metrics",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/d2bot/t-koa-metrics.git"
+  },
+  "license": "MIT",
+  "scripts": {
+    "test": "NODE_ENV=test mocha --exit --harmony --require should --reporter spec",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "measured-core": "^1.49.0",
+    "debug": "*",
+    "methods": "~1.1.0",
+    "path-to-regexp": "^1.2.0",
+    "cron": "^1.7.1",
+    "bunyan": "^1.8.12",
+    "pm2": "^3.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.1.0",
+    "eslint-config-airbnb": "^17.1.1",
+    "eslint-plugin-import": "^2.18.2",
+    "koa": "^1.0.0",
+    "mocha": "^5.0.0",
+    "supertest": "^4.0.2",
+    "should": "^13.2.3"
+  }
+}
