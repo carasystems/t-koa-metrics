@@ -1,15 +1,17 @@
 /* eslint-env node, mocha */
 const request = require('supertest');
 const Koa = require('koa');
-const methods = require('methods').map((method) => {
-  // normalize method names for tests
-  if (method === 'delete') return 'del';
-  if (method === 'connect') return ''; // WTF
-  if (method === 'merge') return '';
-  return method;
-}).filter(Boolean);
+const methods = require('methods')
+  .map((method) => {
+    // normalize method names for tests
+    if (method === 'delete') return 'del';
+    if (method === 'connect') return ''; // WTF
+    if (method === 'merge') return '';
+    return method;
+  })
+  .filter(Boolean);
 
-const route = require('../route')();
+const route = require('../lib/route')();
 
 methods.forEach((method) => {
   const app = new Koa();
