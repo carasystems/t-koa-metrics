@@ -27,7 +27,8 @@
     "pm2": "^3.3.1",
     "extend": "^3.0.2",
     "superagent": "^3.8.3",
-    "uuid": "^3.3.3"
+    "uuid": "^3.3.3",
+    "cls-hooked": "^4.2.2"
   },
   "devDependencies": {
     "eslint": "^6.5.1",
