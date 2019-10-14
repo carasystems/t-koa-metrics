@@ -3,6 +3,7 @@ const request = require('supertest');
 const Koa = require('koa');
 const { expect } = require('chai');
 const uuid = require('uuid');
+const consts = require('../lib/global/constants');
 
 const koaMetrics = require('../lib')({
   app: 'my-sample-app',
@@ -11,17 +12,17 @@ const koaMetrics = require('../lib')({
 const { route } = koaMetrics;
 
 describe('superagent tracer tests', () => {
-  it('should pass the tracerId when receive a request', (done) => {
+  it('should pass the traceId when receive a request', (done) => {
     const app = Koa();
     app.use(koaMetrics.tracer);
     // eslint-disable-next-line require-yield
-    app.use(route.get('/tracer-id', function* handle() {
-      this.body = this.tracerInfo.tracerId;
+    app.use(route.get('/trace-id', function* handle() {
+      this.body = this.traceInfo.traceId;
       return this.body;
     }));
 
     request(app.listen())
-      .get('/tracer-id')
+      .get('/trace-id')
       .expect(200)
       .end((err, res) => {
         if (err) {
@@ -37,7 +38,7 @@ describe('superagent tracer tests', () => {
   });
 
   it('should pass through the traceId when request another service', (done) => {
-    let expectedTracerId = '';
+    let expectedTraceId = '';
     const app = Koa();
 
     app.use(koaMetrics.tracer);
@@ -51,7 +52,7 @@ describe('superagent tracer tests', () => {
         .to
         .have
         .property('get');
-      expectedTracerId = this.tracerInfo.tracerId;
+      expectedTraceId = this.traceInfo.traceId;
       const res = yield this.superagent.get('http://127.0.0.1:8888/request2');
       this.body = res.text;
       return this.body;
@@ -61,7 +62,7 @@ describe('superagent tracer tests', () => {
     app2.use(koaMetrics.tracer);
     // eslint-disable-next-line require-yield
     app2.use(route.get('/request2', function* handler() {
-      this.body = this.tracerInfo.tracerId;
+      this.body = this.traceInfo.traceId;
       return this.body;
     }));
     app2.listen(8888);
@@ -79,7 +80,7 @@ describe('superagent tracer tests', () => {
             .lengthOf(36);
           expect(res.text)
             .to
-            .equal(expectedTracerId);
+            .equal(expectedTraceId);
           done();
         }
       });
@@ -111,7 +112,7 @@ describe('superagent tracer tests', () => {
     app2.use(koaMetrics.tracer);
     // eslint-disable-next-line require-yield
     app2.use(route.get('/request2', function* handler() {
-      this.body = this.tracerInfo.tracerId;
+      this.body = this.traceInfo.traceId;
       return this.body;
     }));
     app2.listen(9999);
@@ -119,11 +120,11 @@ describe('superagent tracer tests', () => {
     const testServer = request(app.listen());
     return Promise.all([
       testServer.get('/request')
-        .set('x-thimble-tracer-id', requestId1)
+        .set(consts.HTTP_HEADER_TRACE_ID, requestId1)
         .expect(200)
         .then(res => res.text),
       testServer.get('/request')
-        .set('x-thimble-tracer-id', requestId2)
+        .set(consts.HTTP_HEADER_TRACE_ID, requestId2)
         .expect(200)
         .then(res => res.text),
     ])

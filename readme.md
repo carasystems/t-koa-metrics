@@ -30,16 +30,45 @@ console.log('listenning on http://localhost:3000');
 
 #### Tracer
 Each http request/response or mongo operation will be logged.
+
+##### useage
+###### http trace
+```javascript
+
+// app.js
+app.use(tMetrics.tracer); // inject the superagent tracer middleware
+
+// a.js
+const request = tMetrics.superagent;
+const res = yield request.get('/xxxxx');
+```
+
+###### monk trace
+```javascript
+
+//db.js
+const monk = require('monk');
+const demoDB = monk(connectionURI, options);
+demoDB.addMiddleware(tMetrics.monkTracer);
+module.exports.demoDB = demoDB;
+```
+
 log format:
 ```javascript
 
 {
   "app": "api-mobile",
-  "request_id": "c1b43018-3fa8-4a73-817a-79e97fa91adc",
-  "request_at": "2019-10-11T06:00:49.057Z",
-  "request_target": "http://127.0.0.1:8888/request2",
-  "request_type": "http_request" || "mongo",
-  "http_method": "GET || POST || DELETE",
+  "type": "thimble-trace",
+  "trace_id": "c1b43018-3fa8-4a73-817a-79e97fa91adc",
+  "trace_timestamp": "2019-10-11T06:00:49.057Z",
+  "span": {
+    "type": "http",
+    "name": "GET http://127.0.0.1:8888/request2",
+    "tags": {
+      "http_method": "GET",
+      "status_code": 200
+    }
+  },
   "process_time": "2.214839"
 }
 
