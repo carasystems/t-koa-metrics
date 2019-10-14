@@ -37,6 +37,31 @@ describe('superagent tracer tests', () => {
       });
   });
 
+  it('should return the traceId when receive a request', (done) => {
+    const app = Koa();
+    app.use(koaMetrics.tracer);
+    // eslint-disable-next-line require-yield
+    app.use(route.get('/trace-id', function* handle() {
+      this.body = this.traceInfo.traceId;
+      return this.body;
+    }));
+
+    request(app.listen())
+      .get('/trace-id')
+      .expect(200)
+      .end((err, res) => {
+        if (err) {
+          done(err);
+        } else {
+          expect(res.headers[consts.HTTP_HEADER_TRACE_ID])
+            .to
+            .have
+            .lengthOf(36);
+          done();
+        }
+      });
+  });
+
   it('should pass through the traceId when request another service', (done) => {
     let expectedTraceId = '';
     const app = Koa();
