@@ -1,4 +1,4 @@
-### koa-metrics
+### koa-metrics v1.1.5
 > 🔨 api metrics utils for koa 1.x
 #### Example
 app.js
@@ -53,6 +53,31 @@ demoDB.addMiddleware(tMetrics.monkTracer);
 module.exports.demoDB = demoDB;
 ```
 
+###### method trace
+```javascript
+
+// sync function
+function fn1(a, b) {
+  return a + b;
+}
+
+const wrappedFn1 = tMetrics.methods.wrap(fn1);
+const result1 = yield wrappedFn1(1, 2);
+
+// async function
+function* fn2(a, b) {
+  return yield new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(a + b);
+    }, 0);
+  });
+}
+
+const wrappedFn2 = tMetrics.methods.wrap(fn2);
+const result2 = yield wrappedFn2(1, 2);
+
+```
+
 log format:
 ```javascript
 
@@ -73,4 +98,5 @@ log format:
 }
 
 ```
-It will contains a trace id in the request header named: `x-thimble-tracer-id`
+
+It will contains a trace id in the request header named: `x-thimble-trace-id`
