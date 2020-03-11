@@ -1,4 +1,4 @@
-### koa-metrics v1.1.5
+### koa-metrics
 > 🔨 api metrics utils for koa 1.x
 #### Example
 app.js
