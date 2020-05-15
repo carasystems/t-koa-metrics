@@ -100,3 +100,9 @@ log format:
 ```
 
 It will contains a trace id in the request header named: `x-thimble-trace-id`
+
+#### Development
+
+1. Install Dependencies(Only Using yarn) `yarn install`
+2. Coding
+3. Format Files(Prettier) `yarn run prettier`
