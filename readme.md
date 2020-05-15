@@ -1,5 +1,5 @@
 ### koa-metrics
-> 🔨 api metrics utils for koa 1.x
+> 🔨 api metrics utils for koa 1.x & 2.x
 #### Example
 app.js
 ``` javascript
