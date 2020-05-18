@@ -2,8 +2,10 @@
 
 const monk = require('monk');
 const chai = require('chai');
+const uuid = require('uuid');
 const spies = require('chai-spies');
 const bunyan = require('bunyan');
+const cls = require('../../lib/global/cls');
 
 chai.use(spies);
 const { expect } = chai;
@@ -30,10 +32,21 @@ describe('monk tracer tests', () => {
   });
 
   it('should works', async () => {
-    await brokerCol.find({
-      name: 'abc',
-    });
+    return new Promise(
+      cls.bind((resolve, reject) => {
+        cls.set('traceInfo', {
+          traceId: uuid.v4(),
+        });
 
-    expect(spyedMonkTracer).to.have.been.called.exactly(1);
+        brokerCol
+          .find({
+            name: 'abc',
+          })
+          .then(resolve)
+          .catch(reject);
+      })
+    ).then(() => {
+      expect(spyedMonkTracer).to.have.been.called.exactly(1);
+    });
   });
 });

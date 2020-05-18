@@ -29,7 +29,8 @@
     "superagent": "^3.8.3",
     "uuid": "^3.3.3",
     "cls-hooked": "^4.2.2",
-    "event-loop-lag": "^1.4.0"
+    "event-loop-lag": "^1.4.0",
+    "co": "^4.6.0"
   },
   "devDependencies": {
     "monk": "^7.1.0",
@@ -47,7 +48,6 @@
     "chai-spies": "^1.0.0",
     "supertest": "^4.0.2",
     "should": "^13.2.3",
-    "co": "^4.6.0",
     "prettier": "^2.0.5",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.2"

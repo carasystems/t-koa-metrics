@@ -8,33 +8,13 @@ const cls = require('../../lib/global/cls');
 chai.use(spies);
 const { expect } = chai;
 
-function infoLogger() {
-  // eslint-disable-next-line prefer-rest-params
-  const args = Array.prototype.slice.call(arguments);
-  // eslint-disable-next-line no-console
-  console.log.apply(this, args);
-}
-
-function errorLogger() {
-  // eslint-disable-next-line prefer-rest-params
-  const args = Array.prototype.slice.call(arguments);
-  // eslint-disable-next-line no-console
-  console.error.apply(this, args);
-}
-
-const logger = {
-  info: chai.spy(infoLogger),
-  error: chai.spy(errorLogger),
-};
-const methodWrapper = require('../../lib/method/wrapper').create({
-  logger,
-});
+const methodWrapper = require('../../lib/method/wrapper');
 
 function testMethod(a, b) {
   return a + b;
 }
 
-function* testAsyncMethod(a, b) {
+function* testGeneratorMethod(a, b) {
   return yield new Promise((resolve) => {
     setTimeout(() => {
       resolve(a + b);
@@ -42,71 +22,137 @@ function* testAsyncMethod(a, b) {
   });
 }
 
+async function testAsyncMethod(a, b) {
+  const result = await new Promise((resolve) => {
+    setTimeout(() => resolve(a + b), 50);
+  });
+  return result;
+}
+
+function createWrapperLogger() {
+  return {
+    // eslint-disable-next-line no-console
+    info: chai.spy(console.log),
+    // eslint-disable-next-line no-console
+    error: chai.spy(console.error),
+  };
+}
+
 describe('monk tracer tests', () => {
-  it('sync should work', (done) => {
-    const wrapped = methodWrapper.wrap(testMethod);
+  it('wrap sync function should work', (done) => {
+    const logger = createWrapperLogger();
+    const wrapper = methodWrapper.create({
+      logger,
+    });
+
+    const wrapped = wrapper.wrap(testMethod);
     const spied = chai.spy(wrapped);
     const result = spied(1, 2);
+
     expect(result).to.equal(3);
-    expect(spied).to.have.been.called();
+    expect(spied).to.have.been.called.exactly(1);
     done();
   });
 
-  it('async should work', (done) => {
+  it('wrap generator should work', (done) => {
     co(function* callback() {
-      const wrapped = methodWrapper.wrap(testAsyncMethod);
+      const logger = createWrapperLogger();
+      const wrapper = methodWrapper.create({
+        logger,
+      });
+      const wrapped = wrapper.wrap(testGeneratorMethod);
       const spied = chai.spy(wrapped);
       const result = yield spied(1, 2);
       expect(result).to.equal(3);
-      expect(spied).to.have.been.called();
-      done();
+      expect(spied).to.have.been.called.exactly(1);
     }).then(
-      () => {},
+      () => done(),
       (err) => {
         done(err);
       }
     );
   });
 
+  it('wrap async function should work', (done) => {
+    const logger = createWrapperLogger();
+    const wrapper = methodWrapper.create({
+      logger,
+    });
+
+    const wrapped = wrapper.wrap(testAsyncMethod);
+    wrapped(1, 2)
+      .then((res) => {
+        expect(res).to.equal(3);
+        done();
+      })
+      .catch(done);
+  });
+
   it('should trace the sync method', (done) => {
-    const wrapped = methodWrapper.wrap(testMethod);
-    const spied = chai.spy(wrapped);
     const clsCtx = cls.createContext();
     cls.enter(clsCtx);
-    cls.set('traceInfo', {
-      app: 'test-app',
-      traceId: uuid.v4(),
+    const logger = createWrapperLogger();
+    const wrapper = methodWrapper.create({
+      logger,
     });
-    const result = spied(1, 2);
-    expect(result).to.equal(3);
-    expect(logger.info).to.have.been.called();
-    cls.exit(clsCtx);
-    done();
+    const wrapped = wrapper.wrap(testMethod);
+
+    cls.bind(() => {
+      cls.set('traceInfo', {
+        traceId: uuid.v4(),
+      });
+
+      const result = wrapped(1, 2);
+      expect(result).to.equal(3);
+      expect(logger.info).to.have.been.called.exactly(1);
+      done();
+    })();
+  });
+
+  it('should trace the generator method', (done) => {
+    const clsCtx = cls.createContext();
+    cls.enter(clsCtx);
+    const logger = createWrapperLogger();
+    const wrapper = methodWrapper.create({
+      logger,
+    });
+    const wrapped = wrapper.wrap(testGeneratorMethod);
+    co(function* callback() {
+      cls.set('traceInfo', {
+        traceId: uuid.v4(),
+      });
+      const result = yield wrapped(1, 2);
+      expect(result).to.equal(3);
+      expect(logger.info).to.have.been.called.exactly(1);
+      done();
+    })
+      .catch(done)
+      .finally(() => {
+        cls.exit(clsCtx);
+      });
   });
 
   it('should trace the async method', (done) => {
     const clsCtx = cls.createContext();
     cls.enter(clsCtx);
     cls.set('traceInfo', {
-      app: 'test-app',
       traceId: uuid.v4(),
     });
-    co(function* callback() {
-      const wrapped = methodWrapper.wrap(testAsyncMethod);
-      const spied = chai.spy(wrapped);
-      const result = yield spied(1, 2);
-      expect(result).to.equal(3);
-      expect(logger.info).to.have.been.called();
-      done();
-    }).then(
-      () => {
+    const logger = createWrapperLogger();
+    const wrapper = methodWrapper.create({
+      logger,
+    });
+    const wrapped = wrapper.wrap(testAsyncMethod);
+    wrapped(1, 2)
+      .then((res) => {
+        expect(res).to.equal(3);
+        expect(logger.info).to.have.been.called.exactly(1);
+        done();
+      })
+      .catch(done)
+      .finally(() => {
         cls.exit(clsCtx);
-      },
-      (err) => {
-        cls.exit(clsCtx);
-        done(err);
-      }
-    );
+      });
   });
 
   it('should trace exception for sync method', (done) => {
@@ -114,13 +160,17 @@ describe('monk tracer tests', () => {
       throw new Error('test');
     }
 
+    const logger = createWrapperLogger();
     const clsCtx = cls.createContext();
     cls.enter(clsCtx);
     cls.set('traceInfo', {
       app: 'test-app',
       traceId: uuid.v4(),
     });
-    const spied = chai.spy(methodWrapper.wrap(testExceptionMethod));
+    const wrapper = methodWrapper.create({
+      logger,
+    });
+    const spied = chai.spy(wrapper.wrap(testExceptionMethod));
     try {
       spied(1, 2);
     } catch (err) {
@@ -128,18 +178,20 @@ describe('monk tracer tests', () => {
       console.log(err);
     }
 
-    expect(logger.error).to.have.been.called();
+    expect(logger.error).to.have.been.called.exactly(1);
     cls.exit(clsCtx);
     done();
   });
 
-  it('should trace the async method', (done) => {
+  it('should trace exception for generator method', (done) => {
     const clsCtx = cls.createContext();
     cls.enter(clsCtx);
     cls.set('traceInfo', {
       app: 'test-app',
       traceId: uuid.v4(),
     });
+
+    const logger = createWrapperLogger();
 
     function* testAsyncErrorMethod() {
       return yield new Promise((resolve, reject) => {
@@ -150,7 +202,10 @@ describe('monk tracer tests', () => {
     }
 
     co(function* callback() {
-      const wrapped = methodWrapper.wrap(testAsyncErrorMethod);
+      const wrapper = methodWrapper.create({
+        logger,
+      });
+      const wrapped = wrapper.wrap(testAsyncErrorMethod);
       const spied = chai.spy(wrapped);
       try {
         yield spied(1, 2);
@@ -158,16 +213,47 @@ describe('monk tracer tests', () => {
         // eslint-disable-next-line no-console
         console.log(err);
       }
-      expect(logger.error).to.have.been.called();
+      expect(logger.error).to.have.been.called.exactly(1);
       done();
-    }).then(
-      () => {
+    })
+      .then(
+        () => {},
+        (err) => {
+          done(err);
+        }
+      )
+      .finally(() => {
         cls.exit(clsCtx);
-      },
-      (err) => {
-        cls.exit(clsCtx);
-        done(err);
-      }
-    );
+      });
+  });
+
+  it('should trace exception for async method', async () => {
+    const clsCtx = cls.createContext();
+    cls.enter(clsCtx);
+    cls.set('traceInfo', {
+      app: 'test-app',
+      traceId: uuid.v4(),
+    });
+
+    const logger = createWrapperLogger();
+
+    async function testAsyncErrorMethod() {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          reject(new Error('test exception'));
+        }, 100);
+      });
+    }
+
+    const wrapper = methodWrapper.create({
+      logger,
+    });
+    const wrapped = wrapper.wrap(testAsyncErrorMethod);
+
+    try {
+      await wrapped();
+    } catch (err) {
+      expect(logger.error).to.have.been.called.exactly(1);
+    }
   });
 });
