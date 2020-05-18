@@ -1,20 +1,19 @@
 /* eslint-env node, mocha */
 const request = require('supertest');
 const Koa = require('koa-v1');
+const route = require('koa-route');
 const { expect } = require('chai');
 const uuid = require('uuid');
 const consts = require('../../lib/global/constants');
 
-const koaMetrics = require('../../lib')({
+const trace = require('../../lib/koa/tracer')({
   app: 'my-sample-app',
 });
-
-const { route } = koaMetrics;
 
 describe('superagent tracer tests for koa1', () => {
   it('should pass the traceId when receive a request', (done) => {
     const app = Koa();
-    app.use(koaMetrics.tracer);
+    app.use(trace);
     app.use(
       // eslint-disable-next-line require-yield
       route.get('/trace-id', function* handle() {
@@ -40,7 +39,7 @@ describe('superagent tracer tests for koa1', () => {
 
   it('should return the traceId when receive a request', (done) => {
     const app = Koa();
-    app.use(koaMetrics.tracer);
+    app.use(trace);
     app.use(
       // eslint-disable-next-line require-yield
       route.get('/trace-id', function* handle() {
@@ -68,7 +67,7 @@ describe('superagent tracer tests for koa1', () => {
     let expectedTraceId = '';
     const app = Koa();
 
-    app.use(koaMetrics.tracer);
+    app.use(trace);
     app.use(
       route.get('/request', function* handler() {
         expect(this.superagent).to.be.an.instanceOf(Object);
@@ -81,7 +80,7 @@ describe('superagent tracer tests for koa1', () => {
     );
 
     const app2 = Koa();
-    app2.use(koaMetrics.tracer);
+    app2.use(trace);
     app2.use(
       // eslint-disable-next-line require-yield
       route.get('/request2', function* handler() {
@@ -114,7 +113,7 @@ describe('superagent tracer tests for koa1', () => {
 
     const app = Koa();
 
-    app.use(koaMetrics.tracer);
+    app.use(trace);
     app.use(
       route.get('/request', function* handler() {
         expect(this.superagent).to.be.an.instanceOf(Object);
@@ -126,7 +125,7 @@ describe('superagent tracer tests for koa1', () => {
     );
 
     const app2 = Koa();
-    app2.use(koaMetrics.tracer);
+    app2.use(trace);
     app2.use(
       // eslint-disable-next-line require-yield
       route.get('/request2', function* handler() {

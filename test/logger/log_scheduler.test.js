@@ -27,7 +27,7 @@ describe('log scheduler tests', () => {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        logScheduler.stop();
+        logScheduler.shutdown();
         expect(spiedLogger.info).to.have.been.called.exactly(1);
         resolve();
       }, 50);
