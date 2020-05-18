@@ -12,11 +12,11 @@
 ## Examples
 
 ### Constractor options
-1. app: The app name
-2. monitorInterval: The interval(seconds) of monitor process, default to 5 seconds
-3. routeMetric: Log metric for each route, default: false
-4. autoStart: auto start the log scheduler, default: true
-
+1. app: [required] The app name
+2. monitorInterval: [optional] The interval(seconds) of monitor process, default to 5 seconds
+3. routeMetric: [optional] Log metric for each route, default: false
+4. autoStart: [optional] auto start the log scheduler, default: true
+5. logger: [optional] the logger to print the trace log
 ### Server Trace - Koa V1
 
 ```javascript
