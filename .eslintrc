@@ -1,9 +1,19 @@
 {
+  "plugins": ["prettier"],
   "extends": [
     "airbnb/base",
     "prettier"
   ],
   "rules": {
-    "import/no-extraneous-dependencies": ["error", {"devDependencies": true}]
-  }
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": true}],
+    "prettier/prettier": "error"
+  },
+  "overrides": [
+    {
+      "files": ["*.test.js"],
+      "rules": {
+        "global-require": "off"
+      }
+    }
+  ]
 }

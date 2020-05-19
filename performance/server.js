@@ -1,4 +1,4 @@
-const koa = require('koa');
+const koa = require('koa-v1');
 const gracefulShutdown = require('http-graceful-shutdown');
 // const route = require('koa-route');
 
@@ -9,7 +9,7 @@ const koaMetrics = require('../lib')({
 
 const { route } = koaMetrics;
 
-const app = module.exports = koa();
+const app = (module.exports = koa());
 
 require('./routes')(app, route);
 

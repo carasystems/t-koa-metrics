@@ -60,3 +60,5 @@ typings/
 *.iml
 .clinic/
 package-lock.json
+demo.js
+yarn.lock
