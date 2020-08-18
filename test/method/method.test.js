@@ -3,7 +3,7 @@ const uuid = require('uuid');
 const co = require('co');
 const chai = require('chai');
 const spies = require('chai-spies');
-const cls = require('../../lib/global/cls');
+const cls = require('../../lib/cls');
 
 chai.use(spies);
 const { expect } = chai;

@@ -15,6 +15,7 @@
   "license": "MIT",
   "scripts": {
     "test": "NODE_ENV=test mocha --harmony --require should --reporter spec 'test/**/*.test.js'",
+    "test:file": "NODE_ENV=test mocha --harmony --require should --reporter spec",
     "prettier": "prettier --write '**/*.js'",
     "lint": "eslint ."
   },
