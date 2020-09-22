@@ -1,133 +1,95 @@
 # koa-metrics
 > 🔨 api metrics utils for koa 1.x & 2.x
 
-## Modules
-
+## Useage
 1. Service Trace: inject trace_id to each request and will passed to the services of downstream
-    1. Router Tracing
-    2. Superagent Tracing 
-2. Monk Trace: Tracing the time elapsed when doing some mongo options
-3. Method Trace: Utilities for trace specific methods manually
+2. Router Monitor: monitor http stats for each route
+3. Builtin HttpClient: provided a http client which integrated with tracing 
+4. Monk Trace: Tracing the time elapsed when doing some mongo options
 
-## Examples
+## Getting started
 
-### Constractor options
-1. app: [required] The app name
-2. monitorInterval: [optional] The interval(seconds) of monitor process, default to 5 seconds
-3. routeMetric: [optional] Log metric for each route, default: false
-4. autoStart: [optional] auto start the log scheduler, default: true
-5. logger: [optional] the logger to print the trace log
-### Server Trace - Koa V1
+### Koa V1
 
 ```javascript
-// app.js
-const path = require('path');
-const fs = require('fs');
-const koa = require('koa');
-const tMetrics = require('t-koa-metrics')({
-  app: 'my-sample-app'
+const koa = require('koa')  // koa v1
+const createTracker = require('t-koa-metrics')
+
+const tracker = createTracker({
+  app: 'demo-app',
 });
 
-const app = module.exports = tMetrics.koaV1(); // create the koa server , the trace middlewares will added automaticlly
-
-const route = tMetrics.route; // use the route
-
+const app = tracker.createKoaV1(koa());
 const routesPath = path.join(__dirname, 'routes');
+
 fs.readdirSync(routesPath).forEach(file => {
   if (file[0] === '.') return;
-  require(`${routesPath}/${file}`)(app, route);
+  require(`${routesPath}/${file}`)(app, tracker.router);
 });
 
-app.start(3000);
-console.log('listenning on http://localhost:3000');
+app.start(3000, () => {
+  console.log('server started!');
+});
+
 ```
 
-### Server Trace - Koa V2
-
+### Koa V2
 ```javascript
-
-const path = require('path');
-const fs = require('fs');
-const koa = require('koa');
+const Koa = require('koa');
 const Router = require('@koa/router');
-const tMetrics = require('t-koa-metrics')({
-  app: 'my-sample-app'
+const createTracker = require('t-koa-metrics')
+
+const tracker = createTracker({
+  app: 'demo-app',
 });
 
-const app = module.exports = tMetrics.koaV2(); // create the koa server , the trace middlewares will added automaticlly
-
-const router = new Router();  // use the @koa/router
-
-const routesPath = path.join(__dirname, 'routes');
-fs.readdirSync(routesPath).forEach(file => {
-  if (file[0] === '.') return;
-  require(`${routesPath}/${file}`)(app, route);
+const router = new Router();
+router.get('/trace-id', async (ctx) => {
+  ctx.body = {
+    traceId: ctx.state.traceInfo.traceId,
+  };
 });
 
+const app = tracker.createKoaV2(new Koa());
 app.use(router.routes());
-
-app.start(3000);
-console.log('listenning on http://localhost:3000');
-
-```
-
-### Mongo Trace
-
-```javascript
-const tMetrics = require('t-koa-metrics')({
-  app: 'my-sample-app'
+app.start(3000, () => {
+  console.log('server started!');
 });
-const demoDb = tMetrics.monkInspector.traceDB(monk('mongodb://localhost:27017/demo')); // use this to add middleware to trace mongo
-demoDb.get('User');
-demoDB.query(...);
 ```
 
-### method trace
-```javascript
-
-// sync function
-function fn1(a, b) {
-  return a + b;
-}
-
-const wrappedFn1 = tMetrics.methods.wrap(fn1);
-const result1 = yield wrappedFn1(1, 2);
-
-// async function
-function* fn2(a, b) {
-  return yield new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(a + b);
-    }, 0);
-  });
-}
-
-const wrappedFn2 = tMetrics.methods.wrap(fn2);
-const result2 = yield wrappedFn2(1, 2);
-
-```
-
-## Log Format
+### Monk Tracing
 
 ```javascript
-{
-  "app": "api-mobile",
-  "type": "thimble-trace",
-  "trace_id": "c1b43018-3fa8-4a73-817a-79e97fa91adc",
-  "trace_timestamp": "2019-10-11T06:00:49.057Z",
-  "span": {
-    "type": "http",
-    "name": "GET http://127.0.0.1:8888/request2",
-    "tags": {
-      "http_method": "GET",
-      "status_code": 200
-    }
-  },
-  "process_time": "2.214839"
-}
+const monk = require('monk');
+const config = require('config');
+const createTracker = require('t-koa-metrics')
+
+const userDb = monk(`${config.db.url}${config.user.db}`, config.db.options);
+const tracker = createTracker({
+  app: 'demo-app',
+});
+
+tracker.monkInspector.traceDB(db); // apply the middleware to trace it
 ```
 
-It will contains a trace id in the request header named: `x-thimble-trace-id`
+## Options
+
+| Options | Type | Default Value | Description |
+| --- | --- | --- | --- |
+| app | string *required* | undefined | the identity of the service |
+| auto_start | boolean | true | auto start monitor & tracing when server start |
+| trace | object | {http: true, monk: true} | the settings about tracing |
+| trace.http | boolean | true | trace http requests |
+| trace.monk | boolean | true | trace monk operations |
+| monitor | object |  | the settings about monitor |
+| monitor.node_process | boolean | true | monitor the node process |
+| monitor.route_metric | boolean | **false** | monitor each route |
+| monitor.interval | number | 5 | interval for print monitor information, timeunit: second |
+
+## Log Types (filed: type)
+1. thimble-trace: http|monk trace log
+2. koa-stats: koa stats, including each route if set monitor.route_metric = true
+3. process-metrics: node process stats
 
 ## Development
 

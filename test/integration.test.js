@@ -32,7 +32,7 @@ describe('integration test for koa', () => {
     const app = metrics.koaV1(KoaV1);
     app.use(
       // eslint-disable-next-line require-yield
-      metrics.route.get('/trace-id', function* handle() {
+      metrics.router.get('/trace-id', function* handle() {
         const query = yield demoDb.get('user').find({
           name: 'abc',
         });

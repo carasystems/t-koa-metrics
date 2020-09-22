@@ -63,14 +63,17 @@ declare namespace KoaRoute {
 declare namespace TKoaMetrics {
   interface Options {
     app: string;
-    trace_http?: boolean;
-    trace_monk?: boolean;
-    monitor_node_process?: boolean;
-    monitorInterval?: number;
-    routeMetric?: boolean;
-    autoStart?: boolean;
-    logger?: BunyanLogger;
-    ignorePaths?: string[];
+    trace?: {
+      http?: boolean;
+      monk?: boolean;
+      ignore_paths?: string[];
+    };
+    monitor?: {
+      node_process?: boolean;
+      route_metric?: boolean;
+      interval?: number;
+    },
+    auto_start?: boolean;
   }
 
   interface MonkInspector {
@@ -93,7 +96,7 @@ declare namespace TKoaMetrics {
     start: () => any;
   }
 
-  interface KoaMetricsInstance {
+  interface Tracker {
     monkInspector: MonkInspector
     config: {
       init: () => Promise<void>,
@@ -104,7 +107,7 @@ declare namespace TKoaMetrics {
     koaV1: (constr: typeof Koa) => KoaInstance;
     createKoaV1: (app: Koa) => KoaInstance;
     createKoaV2: (app: Koa) => KoaInstance;
-    route: KoaRoute.Routes;
+    router: KoaRoute.Routes;
     superagent: SuperAgentStatic;
     createHttpClient: (options: {
       apiBase?: string;
@@ -112,6 +115,6 @@ declare namespace TKoaMetrics {
   }
 }
 
-declare function TKoaMetrics(options: TKoaMetrics.Options): TKoaMetrics.KoaMetricsInstance;
+declare function TKoaMetrics(options: TKoaMetrics.Options): TKoaMetrics.Tracker;
 
 export = TKoaMetrics;

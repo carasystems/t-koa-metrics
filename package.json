@@ -1,6 +1,6 @@
 {
   "name": "t-koa-metrics",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "api metrics utils for koa 1.x & 2.x",
   "main": "./lib/index.js",
   "typings": "./index.d.ts",
@@ -15,8 +15,8 @@
   },
   "license": "MIT",
   "scripts": {
-    "test": "NODE_ENV=test mocha --harmony --require should --reporter spec 'test/**/*.test.js'",
-    "test:file": "NODE_ENV=test mocha --harmony --require should --reporter spec",
+    "test": "cross-env NODE_ENV=test mocha --exit --require should --reporter spec 'test/**/*.test.js'",
+    "test:file": "cross-env NODE_ENV=test mocha --exit --require should --reporter spec",
     "prettier": "prettier --write '**/*.js'",
     "lint": "eslint ."
   },
@@ -55,7 +55,8 @@
     "prettier": "^2.0.5",
     "should": "^13.2.3",
     "supertest": "^4.0.2",
-    "benchmark": "^2.1.4"
+    "benchmark": "^2.1.4",
+    "cross-env": "^7.0.2"
   },
   "husky": {
     "hooks": {
