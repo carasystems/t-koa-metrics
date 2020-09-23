@@ -1,6 +1,5 @@
 // Type definitions for t-koa-metrics
 
-import * as BunyanLogger from 'bunyan';
 import { IMonkManager } from 'monk';
 import * as Koa from 'koa';
 import * as pathToRegexp from 'path-to-regexp';
@@ -60,7 +59,7 @@ declare namespace KoaRoute {
   }
 }
 
-declare namespace TKoaMetrics {
+declare namespace Tracker {
   interface Options {
     app: string;
     trace?: {
@@ -93,28 +92,25 @@ declare namespace TKoaMetrics {
   }
 
   interface KoaInstance extends Koa {
-    start: () => any;
-  }
-
-  interface Tracker {
-    monkInspector: MonkInspector
-    config: {
-      init: () => Promise<void>,
-      [key: string]: any,
-    };
-    start: () => any;
-    koaV2: (constr: typeof Koa) => KoaInstance;
-    koaV1: (constr: typeof Koa) => KoaInstance;
-    createKoaV1: (app: Koa) => KoaInstance;
-    createKoaV2: (app: Koa) => KoaInstance;
-    router: KoaRoute.Routes;
-    superagent: SuperAgentStatic;
-    createHttpClient: (options: {
-      apiBase?: string;
-    }) => HttpClient;
+    start: (port:number, callback?: ()=>void) => any;
   }
 }
 
-declare function TKoaMetrics(options: TKoaMetrics.Options): TKoaMetrics.Tracker;
+declare class Tracker {
+  constructor(options: Tracker.Options);
+  monkInspector: Tracker.MonkInspector;
+  config: {
+    init: () => Promise<void>,
+    [key: string]: any,
+  };
+  start: () => any;
+  createKoaV1: (app: Koa) => Tracker.KoaInstance;
+  createKoaV2: (app: Koa) => Tracker.KoaInstance;
+  router: KoaRoute.Routes;
+  superagent: SuperAgentStatic;
+  createHttpClient: (options: {
+    apiBase?: string;
+  }) => Tracker.HttpClient;
+}
 
-export = TKoaMetrics;
+export = Tracker;

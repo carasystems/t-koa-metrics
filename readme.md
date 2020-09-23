@@ -13,9 +13,9 @@
 
 ```javascript
 const koa = require('koa')  // koa v1
-const createTracker = require('t-koa-metrics')
+const ThimbleTracker = require('t-koa-metrics')
 
-const tracker = createTracker({
+const tracker = new ThimbleTracker({
   app: 'demo-app',
 });
 
@@ -37,9 +37,9 @@ app.start(3000, () => {
 ```javascript
 const Koa = require('koa');
 const Router = require('@koa/router');
-const createTracker = require('t-koa-metrics')
+const ThimbleTracker = require('t-koa-metrics')
 
-const tracker = createTracker({
+const tracker = new ThimbleTracker({
   app: 'demo-app',
 });
 
@@ -62,10 +62,10 @@ app.start(3000, () => {
 ```javascript
 const monk = require('monk');
 const config = require('config');
-const createTracker = require('t-koa-metrics')
+const ThimbleTracker = require('t-koa-metrics')
 
 const userDb = monk(`${config.db.url}${config.user.db}`, config.db.options);
-const tracker = createTracker({
+const tracker = new ThimbleTracker({
   app: 'demo-app',
 });
 
