@@ -77,6 +77,7 @@ declare namespace Tracker {
 
   interface MonkInspector {
     traceDB: (db: IMonkManager) => void;
+    shutdown: () => void;
   }
 
   interface HttpClient {
