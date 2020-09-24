@@ -21,7 +21,7 @@ const spiedLogger = {
 };
 
 const metrics = new Tracker({
-  app: 'test-app',
+  app: 'demo-app',
   logger: spiedLogger,
 });
 
