@@ -92,7 +92,7 @@ declare namespace Tracker {
   }
 
   interface KoaInstance extends Koa {
-    start: (port:number, callback?: ()=>void) => any;
+    start: (port?:number, callback?: ()=>void) => any;
   }
 }
 
