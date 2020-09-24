@@ -4,11 +4,11 @@ const Koa = require('koa-v1');
 const route = require('koa-route');
 const { expect } = require('chai');
 const uuid = require('uuid');
-const consts = require('../../lib/global/constants');
+const consts = require('../../lib/constants');
+const { createLogger } = require('../../lib/logger');
 
-const trace = require('../../lib/koa/tracer')({
-  app: 'my-sample-app',
-});
+const logger = createLogger('my-sample-app');
+const trace = require('../../lib/koa/tracer')(logger);
 
 describe('superagent tracer tests for koa1', () => {
   it('should pass the traceId when receive a request', (done) => {

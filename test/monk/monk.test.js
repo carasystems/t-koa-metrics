@@ -5,7 +5,7 @@ const chai = require('chai');
 const uuid = require('uuid');
 const spies = require('chai-spies');
 const bunyan = require('bunyan');
-const cls = require('../../lib/global/cls');
+const cls = require('../../lib/cls');
 
 chai.use(spies);
 const { expect } = chai;
@@ -16,11 +16,7 @@ const logger = bunyan.createLogger({
 const monkLogger = require('../../lib/monk/monk-logger');
 
 const demoDb = monk('mongodb://localhost:27017/demo');
-const spyedMonkTracer = chai.spy(
-  monkLogger({
-    logger,
-  })
-);
+const spyedMonkTracer = chai.spy(monkLogger(logger));
 
 demoDb.addMiddleware(spyedMonkTracer);
 const brokerCol = demoDb.get('broker2222');

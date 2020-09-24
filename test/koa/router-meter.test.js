@@ -6,7 +6,7 @@ const Router = require('@koa/router');
 const chai = require('chai');
 const spies = require('chai-spies');
 
-const states = require('../../lib/stats');
+const states = require('../../lib/monitor/http_stats');
 const routerMeter = require('../../lib/koa/router-meter');
 
 chai.use(spies);
