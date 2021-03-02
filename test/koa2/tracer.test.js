@@ -1,21 +1,22 @@
 /* eslint-env node, mocha */
 
 const request = require('supertest');
+const superagent = require('superagent');
 const Koa = require('koa-v2');
 const Router = require('@koa/router');
 const { expect } = require('chai');
 const uuid = require('uuid');
-const trace = require('../../lib/koa/tracer2');
+const trace = require('../../lib/koa2/tracer');
 const consts = require('../../lib/constants');
-const { createLogger } = require('../../lib/logger');
+const { inject } = require('../../lib/http/superagent');
+
+inject({});
 
 describe('test suite for tracer with koa2', () => {
   it('should pass the traceId when receive an request', (done) => {
-    const logger = createLogger('my-sample-app');
-
     const app = new Koa();
     const router = new Router();
-    app.use(trace(logger));
+    app.use(trace());
     router.get('/trace-id', (ctx) => {
       ctx.body = ctx.state.traceInfo.traceId;
     });
@@ -39,22 +40,26 @@ describe('test suite for tracer with koa2', () => {
   });
 
   it('concurrent request', () => {
-    const logger = createLogger('my-sample-app');
     const requestId1 = uuid.v4();
     const requestId2 = uuid.v4();
 
     const app = new Koa();
     const router = new Router();
+    async function asyncFoo() {
+      const res = await superagent.get('http://localhost:9999/request2');
+      return res.text;
+    }
+
     router.get('/request', async (ctx) => {
-      const res = await ctx.superagent.get('http://127.0.0.1:9999/request2');
-      ctx.body = res.text;
+      const res = await asyncFoo();
+      ctx.body = res;
     });
-    app.use(trace(logger));
+    app.use(trace());
     app.use(router.routes());
     const server = app.listen();
 
     const app2 = new Koa();
-    app2.use(trace(logger));
+    app2.use(trace());
     const router2 = new Router();
     router2.get('/request2', (ctx) => {
       ctx.body = ctx.state.traceInfo.traceId;

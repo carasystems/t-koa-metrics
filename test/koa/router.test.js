@@ -11,14 +11,14 @@ const methods = require('methods')
   })
   .filter(Boolean);
 
-const route = require('../../lib/koa/route')();
+const router = require('../../lib/koa/router').createRouter();
 
 methods.forEach((method) => {
   const app = new Koa();
 
   app.use(
     // eslint-disable-next-line require-yield
-    route[method]('/:user(tj)', function* handle(user) {
+    router[method]('/:user(tj)', function* handle(user) {
       this.body = user;
     })
   );
@@ -77,7 +77,7 @@ describe('route.all()', () => {
       const app = new Koa();
       app.use(
         // eslint-disable-next-line require-yield
-        route.all('/:user(tj)', function* handle(user) {
+        router.all('/:user(tj)', function* handle(user) {
           this.body = user;
         })
       );
@@ -102,7 +102,7 @@ describe('route.all()', () => {
       const app = new Koa();
       app.use(
         // eslint-disable-next-line require-yield
-        route.all('/:user(tj)', function* handle(user) {
+        router.all('/:user(tj)', function* handle(user) {
           this.body = user;
           return this.body;
         })

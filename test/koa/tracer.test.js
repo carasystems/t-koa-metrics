@@ -1,19 +1,21 @@
 /* eslint-env node, mocha */
 const request = require('supertest');
+const superagent = require('superagent');
 const Koa = require('koa-v1');
 const route = require('koa-route');
 const { expect } = require('chai');
 const uuid = require('uuid');
 const consts = require('../../lib/constants');
-const { createLogger } = require('../../lib/logger');
+const { inject } = require('../../lib/http/superagent');
 
-const logger = createLogger('my-sample-app');
-const trace = require('../../lib/koa/tracer')(logger);
+const trace = require('../../lib/koa/tracer');
+
+inject({});
 
 describe('superagent tracer tests for koa1', () => {
   it('should pass the traceId when receive a request', (done) => {
     const app = Koa();
-    app.use(trace);
+    app.use(trace());
     app.use(
       // eslint-disable-next-line require-yield
       route.get('/trace-id', function* handle() {
@@ -39,7 +41,7 @@ describe('superagent tracer tests for koa1', () => {
 
   it('should return the traceId when receive a request', (done) => {
     const app = Koa();
-    app.use(trace);
+    app.use(trace());
     app.use(
       // eslint-disable-next-line require-yield
       route.get('/trace-id', function* handle() {
@@ -67,20 +69,18 @@ describe('superagent tracer tests for koa1', () => {
     let expectedTraceId = '';
     const app = Koa();
 
-    app.use(trace);
+    app.use(trace());
     app.use(
       route.get('/request', function* handler() {
-        expect(this.superagent).to.be.an.instanceOf(Object);
-        expect(this.superagent).to.have.property('get');
         expectedTraceId = this.traceInfo.traceId;
-        const res = yield this.superagent.get('http://127.0.0.1:8888/request2');
+        const res = yield superagent.get('http://127.0.0.1:8888/request2');
         this.body = res.text;
         return this.body;
       })
     );
 
     const app2 = Koa();
-    app2.use(trace);
+    app2.use(trace());
     app2.use(
       // eslint-disable-next-line require-yield
       route.get('/request2', function* handler() {
@@ -113,19 +113,17 @@ describe('superagent tracer tests for koa1', () => {
 
     const app = Koa();
 
-    app.use(trace);
+    app.use(trace());
     app.use(
       route.get('/request', function* handler() {
-        expect(this.superagent).to.be.an.instanceOf(Object);
-        expect(this.superagent).to.have.property('get');
-        const res = yield this.superagent.get('http://127.0.0.1:9999/request2');
+        const res = yield superagent.get('http://127.0.0.1:9999/request2');
         this.body = res.text;
         return this.body;
       })
     );
 
     const app2 = Koa();
-    app2.use(trace);
+    app2.use(trace());
     app2.use(
       // eslint-disable-next-line require-yield
       route.get('/request2', function* handler() {

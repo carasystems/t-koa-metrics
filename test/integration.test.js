@@ -21,7 +21,7 @@ const spiedLogger = {
 };
 
 const metrics = new Tracker({
-  app: 'demo-app',
+  service: 'demo-service',
   logger: spiedLogger,
 });
 
