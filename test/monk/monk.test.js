@@ -3,11 +3,10 @@
 const monk = require('monk');
 const chai = require('chai');
 const uuid = require('uuid');
-const spies = require('chai-spies');
+const sinon = require('sinon');
 const bunyan = require('bunyan');
 const cls = require('../../lib/cls');
 
-chai.use(spies);
 const { expect } = chai;
 const logger = bunyan.createLogger({
   name: 'test-logger',
@@ -16,18 +15,23 @@ const logger = bunyan.createLogger({
 const monkLogger = require('../../lib/monk/monk-logger');
 
 const demoDb = monk('mongodb://localhost:27017/demo');
-const spyedMonkTracer = chai.spy(monkLogger(logger));
 
-demoDb.addMiddleware(spyedMonkTracer);
+const monkLoggerMW = monkLogger(logger);
+
+demoDb.addMiddleware(monkLoggerMW);
 const brokerCol = demoDb.get('broker2222');
 
 describe('monk tracer tests', () => {
+  const sandbox = sinon.createSandbox();
+
   after((done) => {
     demoDb.close();
+    sandbox.restore();
     done();
   });
 
   it('should works', async () => {
+    const stub = sandbox.stub(logger, 'info');
     return new Promise(
       cls.bind((resolve, reject) => {
         cls.set('traceInfo', {
@@ -42,7 +46,7 @@ describe('monk tracer tests', () => {
           .catch(reject);
       })
     ).then(() => {
-      expect(spyedMonkTracer).to.have.been.called.exactly(1);
+      expect(stub.callCount).to.equal(1);
     });
   });
 });

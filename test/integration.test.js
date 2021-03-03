@@ -5,19 +5,15 @@ const request = require('supertest');
 const KoaV1 = require('koa-v1');
 const monk = require('monk');
 const KoaV2 = require('koa-v2');
-const Router = require('@koa/router');
-const chai = require('chai');
-const spies = require('chai-spies');
+const sinon = require('sinon');
 const { expect } = require('chai');
 const Tracker = require('../lib');
 
-chai.use(spies);
-
+const infoLogger = sinon.fake();
+const errorLogger = sinon.fake();
 const spiedLogger = {
-  // eslint-disable-next-line no-console
-  info: chai.spy(console.log),
-  // eslint-disable-next-line no-console
-  error: chai.spy(console.error),
+  info: infoLogger,
+  error: errorLogger,
 };
 
 const metrics = new Tracker({
@@ -28,11 +24,15 @@ const metrics = new Tracker({
 const demoDb = metrics.monkInspector.traceDB(monk('mongodb://localhost:27017/demo'));
 
 describe('integration test for koa', () => {
+  beforeEach(() => {
+    infoLogger.resetHistory();
+    errorLogger.resetHistory();
+  });
+
   it('work with koa v1', (done) => {
     const app = metrics.createKoaV1(KoaV1());
     app.use(
-      // eslint-disable-next-line require-yield
-      metrics.router.get('/trace-id', function* handle() {
+      app.router.get('/trace-id', function* handle() {
         const query = yield demoDb.get('user').find({
           name: 'abc',
         });
@@ -52,15 +52,14 @@ describe('integration test for koa', () => {
       .end((err, res) => {
         server.close();
         expect(res.body.traceId).to.have.lengthOf(36);
-        expect(spiedLogger.info).to.have.been.called();
+        expect(infoLogger.callCount).to.equal(1);
         done(err);
       });
   });
 
   it('work with koa v2', (done) => {
     const app = metrics.createKoaV2(new KoaV2());
-    const router = new Router();
-    router.get('/trace-id', async (ctx) => {
+    app.router.get('/trace-id', async (ctx) => {
       const query = await demoDb.get('user').find({
         name: 'abc',
       });
@@ -70,7 +69,6 @@ describe('integration test for koa', () => {
         traceId: ctx.state.traceInfo.traceId,
       };
     });
-    app.use(router.routes());
 
     const server = app.start();
 
@@ -80,7 +78,7 @@ describe('integration test for koa', () => {
       .end((err, res) => {
         server.close();
         expect(res.body.traceId).to.have.lengthOf(36);
-        expect(spiedLogger.info).to.have.been.called();
+        expect(infoLogger.callCount).to.equal(1);
         done(err);
       });
   });

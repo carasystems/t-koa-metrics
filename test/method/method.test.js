@@ -2,10 +2,9 @@
 const uuid = require('uuid');
 const co = require('co');
 const chai = require('chai');
-const spies = require('chai-spies');
+const sinon = require('sinon');
 const cls = require('../../lib/cls');
 
-chai.use(spies);
 const { expect } = chai;
 
 const methodWrapper = require('../../lib/method/wrapper');
@@ -29,16 +28,22 @@ async function testAsyncMethod(a, b) {
   return result;
 }
 
+const traceInfoLogger = sinon.fake();
+const traceErrorLogger = sinon.fake();
+
 function createWrapperLogger() {
   return {
-    // eslint-disable-next-line no-console
-    info: chai.spy(console.log),
-    // eslint-disable-next-line no-console
-    error: chai.spy(console.error),
+    info: traceInfoLogger,
+    error: traceErrorLogger,
   };
 }
 
-describe('monk tracer tests', () => {
+describe('methods tracer tests', () => {
+  beforeEach(() => {
+    traceInfoLogger.resetHistory();
+    traceErrorLogger.resetHistory();
+  });
+
   it('wrap sync function should work', (done) => {
     const logger = createWrapperLogger();
     const wrapper = methodWrapper.create({
@@ -46,11 +51,9 @@ describe('monk tracer tests', () => {
     });
 
     const wrapped = wrapper.wrap(testMethod);
-    const spied = chai.spy(wrapped);
-    const result = spied(1, 2);
-
+    const result = wrapped(1, 2);
     expect(result).to.equal(3);
-    expect(spied).to.have.been.called.exactly(1);
+    expect(traceInfoLogger.callCount).to.equal(0);
     done();
   });
 
@@ -61,16 +64,11 @@ describe('monk tracer tests', () => {
         logger,
       });
       const wrapped = wrapper.wrap(testGeneratorMethod);
-      const spied = chai.spy(wrapped);
-      const result = yield spied(1, 2);
+      const result = yield wrapped(1, 2);
       expect(result).to.equal(3);
-      expect(spied).to.have.been.called.exactly(1);
-    }).then(
-      () => done(),
-      (err) => {
-        done(err);
-      }
-    );
+      expect(traceInfoLogger.callCount).to.equal(0);
+      done();
+    }).catch(done);
   });
 
   it('wrap async function should work', (done) => {
@@ -83,18 +81,18 @@ describe('monk tracer tests', () => {
     wrapped(1, 2)
       .then((res) => {
         expect(res).to.equal(3);
+        expect(traceInfoLogger.callCount).to.equal(0);
         done();
       })
       .catch(done);
   });
 
   it('should trace the sync method', (done) => {
-    const clsCtx = cls.createContext();
-    cls.enter(clsCtx);
     const logger = createWrapperLogger();
     const wrapper = methodWrapper.create({
       logger,
     });
+
     const wrapped = wrapper.wrap(testMethod);
 
     cls.bind(() => {
@@ -104,7 +102,7 @@ describe('monk tracer tests', () => {
 
       const result = wrapped(1, 2);
       expect(result).to.equal(3);
-      expect(logger.info).to.have.been.called.exactly(1);
+      expect(traceInfoLogger.callCount).to.equal(1);
       done();
     })();
   });
@@ -123,7 +121,7 @@ describe('monk tracer tests', () => {
       });
       const result = yield wrapped(1, 2);
       expect(result).to.equal(3);
-      expect(logger.info).to.have.been.called.exactly(1);
+      expect(traceInfoLogger.callCount).to.equal(1);
       done();
     })
       .catch(done)
@@ -146,7 +144,7 @@ describe('monk tracer tests', () => {
     wrapped(1, 2)
       .then((res) => {
         expect(res).to.equal(3);
-        expect(logger.info).to.have.been.called.exactly(1);
+        expect(traceInfoLogger.callCount).to.equal(1);
         done();
       })
       .catch(done)
@@ -161,26 +159,25 @@ describe('monk tracer tests', () => {
     }
 
     const logger = createWrapperLogger();
-    const clsCtx = cls.createContext();
-    cls.enter(clsCtx);
-    cls.set('traceInfo', {
-      app: 'test-app',
-      traceId: uuid.v4(),
-    });
     const wrapper = methodWrapper.create({
       logger,
     });
-    const spied = chai.spy(wrapper.wrap(testExceptionMethod));
-    try {
-      spied(1, 2);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-    }
+    const wrapped = wrapper.wrap(testExceptionMethod);
 
-    expect(logger.error).to.have.been.called.exactly(1);
-    cls.exit(clsCtx);
-    done();
+    cls.bind(() => {
+      cls.set('traceInfo', {
+        app: 'test-app',
+        traceId: uuid.v4(),
+      });
+      try {
+        wrapped(1, 2);
+        done(new Error('unexpected'));
+      } catch (err) {
+        // do nothing for error;
+        expect(traceErrorLogger.callCount).to.equal(1);
+        done();
+      }
+    })();
   });
 
   it('should trace exception for generator method', (done) => {
@@ -206,25 +203,15 @@ describe('monk tracer tests', () => {
         logger,
       });
       const wrapped = wrapper.wrap(testAsyncErrorMethod);
-      const spied = chai.spy(wrapped);
       try {
-        yield spied(1, 2);
+        yield wrapped(1, 2);
+        done(new Error('Unexpected'));
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
+        // do nothing
       }
-      expect(logger.error).to.have.been.called.exactly(1);
+      expect(traceErrorLogger.callCount).to.equal(1);
       done();
-    })
-      .then(
-        () => {},
-        (err) => {
-          done(err);
-        }
-      )
-      .finally(() => {
-        cls.exit(clsCtx);
-      });
+    }).catch(done);
   });
 
   it('should trace exception for async method', async () => {
@@ -253,7 +240,9 @@ describe('monk tracer tests', () => {
     try {
       await wrapped();
     } catch (err) {
-      expect(logger.error).to.have.been.called.exactly(1);
+      expect(traceErrorLogger.callCount).to.equal(1);
+    } finally {
+      cls.exit(clsCtx);
     }
   });
 });
