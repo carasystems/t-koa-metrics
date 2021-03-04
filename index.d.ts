@@ -3,10 +3,10 @@
 import { IMonkManager } from 'monk';
 import * as Koa from 'koa';
 import * as pathToRegexp from 'path-to-regexp';
-import { SuperAgentStatic } from 'superagent';
+import * as Koa2Router from '@koa/router';
 
 /// <reference types="node" />
-declare namespace KoaRoute {
+declare namespace TKoa1Router {
   type Path = string | RegExp | Array<string | RegExp>;
 
   type Handler = (this: Koa.Context, ctx: Koa.Context, ...params: any[]) => any;
@@ -20,7 +20,7 @@ declare namespace KoaRoute {
 
   type CreateMethod = (method: string) => Method;
 
-  interface Routes {
+  interface Router {
     all: Method;
     acl: Method;
     bind: Method;
@@ -56,23 +56,66 @@ declare namespace KoaRoute {
     unlink: Method;
     unlock: Method;
     unsubscribe: Method;
+    tGet: Method;
+    tPut: Method;
+    tPost: Method;
+    tDel: Method;
   }
+}
+
+declare namespace TKoa2Router {
+  class Router<StateT = any, CustomT = {}> extends  Koa2Router {
+      tGet<T, U>(
+          name: string,
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>
+      tGet<T, U>(
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>;
+      tPut<T, U>(
+          name: string,
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>
+      tPut<T, U>(
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>;
+      tPost<T, U>(
+          name: string,
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>
+      tPost<T, U>(
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>;
+      tDel<T, U>(
+          name: string,
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>
+      tDel<T, U>(
+          path: string | RegExp,
+          ...middleware: Array<Koa2Router.Middleware<StateT, CustomT>>
+      ): Router<StateT & T, CustomT & U>;
+    }
 }
 
 declare namespace Tracker {
   interface Options {
-    app: string;
+    service: string;
     trace?: {
       http?: boolean;
       monk?: boolean;
-      ignore_paths?: string[];
     };
     monitor?: {
-      node_process?: boolean;
-      route_metric?: boolean;
+      process?: boolean;
+      route?: boolean;
       interval?: number;
     },
-    auto_start?: boolean;
   }
 
   interface MonkInspector {
@@ -92,8 +135,14 @@ declare namespace Tracker {
     headers?: Record<string, string>;
   }
 
-  interface KoaInstance extends Koa {
-    start: (port?:number, callback?: ()=>void) => any;
+  interface Koa1Instance extends Koa {
+    start: (port?: number, callback?: () => void) => any;
+    router: TKoa1Router.Router;
+  }
+
+  interface Koa2Instance extends Koa {
+    start: (port?: number, callback?: () => void) => any;
+    router: TKoa2Router.Router;
   }
 }
 
@@ -104,14 +153,8 @@ declare class Tracker {
     init: () => Promise<void>,
     [key: string]: any,
   };
-  start: () => any;
-  createKoaV1: (app: Koa) => Tracker.KoaInstance;
-  createKoaV2: (app: Koa) => Tracker.KoaInstance;
-  router: KoaRoute.Routes;
-  superagent: SuperAgentStatic;
-  createHttpClient: (options: {
-    apiBase?: string;
-  }) => Tracker.HttpClient;
+  createKoaV1: (app: Koa) => Tracker.Koa1Instance;
+  createKoaV2: (app: Koa) => Tracker.Koa2Instance;
 }
 
 export = Tracker;
