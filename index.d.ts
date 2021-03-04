@@ -152,6 +152,7 @@ declare class Tracker {
   config: {
     init: () => Promise<void>,
     [key: string]: any,
+    shutdown: () => void,
   };
   createKoaV1: (app: Koa) => Tracker.Koa1Instance;
   createKoaV2: (app: Koa) => Tracker.Koa2Instance;
