@@ -45,19 +45,17 @@ describe('integration test for koa', () => {
       })
     );
 
-    const server = app.start();
-    request(server)
+    request(app.callback())
       .get('/trace-id')
       .expect(200)
       .end((err, res) => {
-        server.close();
         expect(res.body.traceId).to.have.lengthOf(36);
         expect(infoLogger.callCount).to.equal(1);
         done(err);
       });
   });
 
-  it('work with koa v2', (done) => {
+  it('work with koa v2', async () => {
     const app = metrics.createKoaV2(new KoaV2());
     app.router.get('/trace-id', async (ctx) => {
       const query = await demoDb.get('user').find({
@@ -70,16 +68,9 @@ describe('integration test for koa', () => {
       };
     });
 
-    const server = app.start();
-
-    request(server)
-      .get('/trace-id')
-      .expect(200)
-      .end((err, res) => {
-        server.close();
-        expect(res.body.traceId).to.have.lengthOf(36);
-        expect(infoLogger.callCount).to.equal(1);
-        done(err);
-      });
+    app.build();
+    const res = await request(app.callback()).get('/trace-id').expect(200);
+    expect(res.body.traceId).to.have.lengthOf(36);
+    expect(infoLogger.callCount).to.equal(1);
   });
 });

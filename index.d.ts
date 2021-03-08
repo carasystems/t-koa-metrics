@@ -136,12 +136,13 @@ declare namespace Tracker {
   }
 
   interface Koa1Instance extends Koa {
-    start: (port?: number, callback?: () => void) => any;
+    start: (port?: number, callback?: () => void) => void;
     router: TKoa1Router.Router;
   }
 
   interface Koa2Instance extends Koa {
-    start: (port?: number, callback?: () => void) => any;
+    build: () => Koa2Instance;
+    start: (port?: number) => Promise<void>;
     router: TKoa2Router.Router;
   }
 }
