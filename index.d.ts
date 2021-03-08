@@ -116,6 +116,9 @@ declare namespace Tracker {
       route?: boolean;
       interval?: number;
     },
+    config?: {
+      enable?: boolean;
+    }
   }
 
   interface MonkInspector {

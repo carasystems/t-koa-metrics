@@ -61,9 +61,9 @@ app.router.get('/trace-id', async (ctx) => {
   };
 });
 
-app.start(3000, () => {
+app.build().start(3000).then(() => {
   console.log('server started!');
-});
+})
 ```
 
 ### Monk Tracing
