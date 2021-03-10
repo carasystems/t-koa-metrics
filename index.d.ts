@@ -105,8 +105,10 @@ declare namespace TKoa2Router {
 }
 
 declare namespace Tracker {
+  type Region = 'us-east-1' | 'us-east-2' | 'us-west-1' | 'us-west-2';
   interface Options {
     service: string;
+    region: Region;
     trace?: {
       http?: boolean;
       monk?: boolean;
