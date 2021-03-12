@@ -164,6 +164,8 @@ declare namespace Tracker {
   }
 
   export const config;
+
+  export const getSecretValue:(region: string, env: string, service: string, key: string) => Promise<any>;
 }
 
 export = Tracker;
