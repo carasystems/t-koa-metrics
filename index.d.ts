@@ -104,6 +104,7 @@ declare namespace TKoa2Router {
     }
 }
 
+declare var config: Tracker.IConfig;
 declare namespace Tracker {
   type Region = 'us-east-1' | 'us-east-2' | 'us-west-1' | 'us-west-2';
   interface Options {
@@ -150,18 +151,19 @@ declare namespace Tracker {
     start: (port?: number) => Promise<void>;
     router: TKoa2Router.Router;
   }
-}
 
-declare class Tracker {
-  constructor(options: Tracker.Options);
-  monkInspector: Tracker.MonkInspector;
-  config: {
-    init: () => Promise<void>,
-    [key: string]: any,
-    shutdown: () => void,
-  };
-  createKoaV1: (app: Koa) => Tracker.Koa1Instance;
-  createKoaV2: (app: Koa) => Tracker.Koa2Instance;
+  interface IConfig {
+    [key: string]: any;
+  }
+  export class Tracker {
+    constructor(options: Tracker.Options);
+    monkInspector: Tracker.MonkInspector;
+    config: IConfig;
+    createKoaV1: (app: Koa) => Tracker.Koa1Instance;
+    createKoaV2: (app: Koa) => Tracker.Koa2Instance;
+  }
+
+  export const config;
 }
 
 export = Tracker;
